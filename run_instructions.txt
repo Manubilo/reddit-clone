@@ -1,0 +1,8 @@
+Check package.json, scripts
+
+Server
+yarn watch
+yarn dev
+
+Client
+yarn dev
