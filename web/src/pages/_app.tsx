@@ -1,5 +1,4 @@
 import { ChakraProvider, ColorModeProvider, CSSReset } from '@chakra-ui/react';
-import { cacheExchange, Cache, QueryInput } from '@urql/exchange-graphcache';
 
 import { Provider, createClient, fetchExchange, dedupExchange } from 'urql';
 import {
@@ -10,15 +9,7 @@ import {
   RegisterMutation,
 } from '../generated/graphql';
 import theme from '../theme';
-
-function betterUpdateQuery<Result, Query>(
-  cache: Cache,
-  qi: QueryInput,
-  result: any,
-  fn: (r: Result, q: Query) => Query
-) {
-  return cache.updateQuery(qi, (data) => fn(result, data as any) as any);
-}
+import { betterUpdateQuery } from '../utils/betterUpdateQuery';
 
 const client = createClient({
   url: 'http://localhost:4000/graphql',
