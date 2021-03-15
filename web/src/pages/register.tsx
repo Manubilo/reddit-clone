@@ -13,10 +13,13 @@ import { InputField } from '../components/InputField';
 import { useMutation } from 'urql';
 import { useRegisterMutation } from '../generated/graphql';
 import { toErrorMap } from '../utils/toErrorMap';
+import { useRouter } from 'next/router';
+import { EntityManager } from '@mikro-orm/postgresql';
 
 interface registerProps {}
 
 const Register: React.FC<registerProps> = ({}) => {
+  const router = useRouter();
   const [, register] = useRegisterMutation();
   return (
     <Wrapper variant="small">
@@ -28,6 +31,9 @@ const Register: React.FC<registerProps> = ({}) => {
             //handle errors
             [{ field: 'username', message: 'something wrong' }];
             setErrors(toErrorMap(response.data.register.errors));
+          } else if (response.data.register.user) {
+            //worked
+            router.push('/');
           }
         }}
       >
