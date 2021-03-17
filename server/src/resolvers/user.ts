@@ -1,3 +1,4 @@
+import { FORGET_PASSWORD_PREFIX } from './../constants';
 import { validateRegister } from './../utils/validateRegister';
 import { User } from './../entities/User';
 import { MyContext } from './../types';
@@ -14,6 +15,8 @@ import argon2 from 'argon2';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { COOKIE_NAME } from '../constants';
 import { UsernamePasswordInput } from './UsernamePasswordInput';
+import { sendEmail } from '../utils/sendEmail';
+import { v4 } from 'uuid';
 
 @ObjectType()
 class FieldError {
@@ -36,8 +39,29 @@ class UserResponse {
 @Resolver()
 export class UserResolver {
   @Mutation(() => Boolean)
-  async forgotPassword(@Arg('email') email: string, @Ctx() { em }: MyContext) {
-    //const user = await em.findOne(User, { email });
+  async forgotPassword(
+    @Arg('email') email: string,
+    @Ctx() { em, redis }: MyContext
+  ) {
+    const user = await em.findOne(User, { email });
+    if (!user) {
+      //the email is not in the database
+      return true;
+    }
+
+    //creating unique token with uuid
+    const token = v4();
+    await redis.set(
+      FORGET_PASSWORD_PREFIX + token,
+      user.id,
+      'ex',
+      1000 * 60 * 60 * 24 * 3 //lasts 3 days
+    );
+
+    sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+    );
     return true;
   }
 
@@ -114,7 +138,9 @@ export class UserResolver {
     );
     if (!user) {
       return {
-        errors: [{ field: 'username', message: "that username doesn't exist" }],
+        errors: [
+          { field: 'usernameOrEmail', message: "that username doesn't exist" },
+        ],
       };
     }
 
